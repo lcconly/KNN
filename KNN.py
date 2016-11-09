@@ -18,26 +18,24 @@ from scipy.io.mmio import mminfo,mmread,mmwrite
 __location__=os.path.realpath(os.path.join(os.getcwd(),os.path.dirname(__file__)))
 
 #Input matrix filename && judge wether it is follow the rule *.mtx
-#mtx_file_name=input("Input the file of matrix as *.mtx: ")
-#pattern=re.compile(r'/\.mtx')
-#match=re.match(pattern,mtx_file_name)
-#while match==False:
-#    mtx_file_name=input("Error file name, Input again: ")
-#    match=re.match(pattern,mtx_file_name)
+mtx_file_name=input("Input the file of matrix as *.mtx: ")
+pattern=re.compile(r'.*.mtx')
+match=re.match(pattern,mtx_file_name)
+while match==False:
+    mtx_file_name=input("Error file name, Input again: ")
+    match=re.match(pattern,mtx_file_name)
 
-mtx_file_name="b.mtx"
 #using scipy.sparse to open file and store the data
 mtx_file_location=os.path.join(__location__,mtx_file_name)
 mtx=csr_matrix(mmread(mtx_file_location),dtype=float)
 
 #open Labels files and store the data in label_dict as a dictionary
-#label_file_name=input("Input the file of label as *.labels: ")
-#pattern=re.compile(r'/\.labels')
-#match=re.match(pattern,label_file_name)
-#while match==False:
-#    label_file_name=input("Error label name, Input again: ")
-#    match=re.match(pattern,label_file_name)
-label_file_name="b.labels"
+label_file_name=input("Input the file of label as *.labels: ")
+pattern=re.compile(r'.*.labels')
+match=re.match(pattern,label_file_name)
+while match==False:
+    label_file_name=input("Error label name, Input again: ")
+    match=re.match(pattern,label_file_name)
 label_file_path=os.path.join(__location__,label_file_name)
 label_file=open(label_file_path)
 label_list=list()
@@ -151,5 +149,7 @@ def ten_cross_validation(k,weighted,matrix,label_list):
 #print(mtx)
 #result=k_NN(3,mtx,csr_matrix([5.0,8.0]).getrow(0),False,label_list)
 #print(result)
-accuracy=ten_cross_validation(3,True,mtx,label_list)
-print("accuracy: %-10.4f %%"%(accuracy*100))
+k=input("Input the parameter k (an integer): ")
+weighted=input("Input True(weighted) or False(unweighted): ")
+accuracy=ten_cross_validation(int(k),weighted,mtx,label_list)
+print("accuracy: %-10.4f%%"%(accuracy*100))
