@@ -14,29 +14,35 @@ import time
 import copy
 from scipy.sparse import csr_matrix,vstack
 from scipy.io.mmio import mminfo,mmread,mmwrite
+
+MAX_NUM=99999#define max num for divied by zero
 #####get upper path of the code
 __location__=os.path.realpath(os.path.join(os.getcwd(),os.path.dirname(__file__)))
 
-#Input matrix filename && judge wether it is follow the rule *.mtx
+#Input matrix filename using Regular Expressions to match
 mtx_file_name=input("Input the file of matrix as *.mtx: ")
-pattern=re.compile(r'.*.mtx')
+pattern=re.compile(r'.*\.mtx')
 match=re.match(pattern,mtx_file_name)
-while match==False:
-    mtx_file_name=input("Error file name, Input again: ")
+mtx_file_location=os.path.join(__location__,mtx_file_name)
+#judge wether filename is follow the rule *.mtx or exist
+while match==None or os.path.isfile(mtx_file_location)==False:
+    mtx_file_name=input("Error file name or file does not exist, Input again: ")
     match=re.match(pattern,mtx_file_name)
+    mtx_file_location=os.path.join(__location__,mtx_file_name)
 
 #using scipy.sparse to open file and store the data
-mtx_file_location=os.path.join(__location__,mtx_file_name)
 mtx=csr_matrix(mmread(mtx_file_location),dtype=float)
 
-#open Labels files and store the data in label_dict as a dictionary
+#Input label filename using Regular Expressions to match
 label_file_name=input("Input the file of label as *.labels: ")
-pattern=re.compile(r'.*.labels')
+pattern=re.compile(r'.*\.labels')
 match=re.match(pattern,label_file_name)
-while match==False:
-    label_file_name=input("Error label name, Input again: ")
-    match=re.match(pattern,label_file_name)
 label_file_path=os.path.join(__location__,label_file_name)
+#judge wether filename is follow the rule *.labels or exist
+while match==None or os.path.isfile(label_file_path)==False:
+    label_file_name=input("Error label name or file does not exist, Input again: ")
+    match=re.match(pattern,label_file_name)
+    label_file_path=os.path.join(__location__,label_file_name)
 label_file=open(label_file_path)
 label_list=list()
 for line in label_file.readlines():
@@ -44,7 +50,7 @@ for line in label_file.readlines():
     if len(label)==2:
         label_list.append(label[1])
 
-#define function to calculate the distance of two document, using numpy
+#define function to calculate the euclidean distance of two array, using numpy
 def euclidean_distance(array1, array2):
 #    col_arr1=list()
 #    col_arr2=list()
@@ -65,7 +71,7 @@ def euclidean_distance(array1, array2):
     return numpy.sqrt(numpy.sum(numpy.square(array1.todense()-array2.todense())))
             
 
-#define function to get k nearest ones, it returns the assign label
+#define function to get k nearest ones, it returns the assigned label
 #k is the k nearest neighbours, matrix is training matrix, arry is un-labeled array
 #if weighted is True, the result is weighted KNN. Otherwise, it will be wigheted KNN
 def k_NN(k,matrix,arr,weighted,label_list):
@@ -88,40 +94,50 @@ def k_NN(k,matrix,arr,weighted,label_list):
     if not weighted==True:
         #unweighted KNN
         count_dict={}
+        #count the item and merge 
         for item in result_dict.items():
             if label_list[item[0]] not in count_dict.keys():
                 count_dict[label_list[item[0]]]=1
             else:
                 count_dict[label_list[item[0]]]=count_dict[label_list[item[0]]]+1
+        #sort the result to get the result
         sorted_count_dict= sorted(count_dict.items(), key=lambda d:d[1], reverse = True)
         result_label=sorted_count_dict[0][0]
     else:   
         #weighted KNN
         weight_count_dict={}
         for item in result_dict.items():
+            #calculate weighted and merge differnet item
             if label_list[item[0]] not in weight_count_dict.keys():
+                #there are some cases that two arrays are the same.
                 if not item[1]==0:
                     weight_count_dict[label_list[item[0]]]=1/item[1]
                 else:
-                    weight_count_dict[label_list[item[0]]] =9999
+                    weight_count_dict[label_list[item[0]]] =MAX_NUM
             else: 
                 if not item[1]==0:
                     weight_count_dict[label_list[item[0]]]=weight_count_dict[label_list[item[0]]]+1/item[1]
                 else:
-                    weight_count_dict[label_list[item[0]]]=weight_count_dict[label_list[item[0]]]+9999
+                    weight_count_dict[label_list[item[0]]]=weight_count_dict[label_list[item[0]]]+MAX_NUM
+        #sort the result and get highest weighted one
         sorted_weighted_count_dict= sorted(weight_count_dict.items(), key=lambda d:d[1], reverse = True)
         result_label=sorted_weighted_count_dict[0][0]
     return result_label
+
+#ten cross validation to calculate the accuracy
 def ten_cross_validation(k,weighted,matrix,label_list):
     sum_accuracy=0
     each_fold_num=int(matrix.shape[0]/10)
+    #generate a random list
     random_total=[n for n in range(matrix.shape[0])]
     random.shuffle(random_total)
+    #divie the test as ten folds
     for i in range(10):
         count_accuracy=0
         end_point=(i+1)*each_fold_num
         if i==9:
             end_point=matrix.shape[0]
+        #get selected data as un-labeled array
         random_list=[]
         new_label_list=copy.copy(label_list)
         for j in range(i*each_fold_num,end_point):
@@ -130,6 +146,7 @@ def ten_cross_validation(k,weighted,matrix,label_list):
         for j in random_list:
             del(new_label_list[j])
         temp_matrix=None
+        #using the rest data form as a matrix and set as training data
         for j in range(matrix.shape[0]):
             if j not in random_list:
                 temp_matrix=vstack([temp_matrix,matrix.getrow(j)])
@@ -139,7 +156,10 @@ def ten_cross_validation(k,weighted,matrix,label_list):
 #                print(m)
 #                numpy.delete(temp_matrix,[random_total[j],m],None) 
 #        mmwrite("temp.mtx",temp_matrix)
+
+        #define as csr_matrix to reduce time and space cost
         temp_matrix=csr_matrix(temp_matrix)
+        #calculate accuracy
         for j in range(i*each_fold_num,end_point):
             if label_list[random_total[j]]==k_NN(k,temp_matrix,matrix.getrow(random_total[j]),weighted,new_label_list):
                 count_accuracy=count_accuracy+1
@@ -149,7 +169,14 @@ def ten_cross_validation(k,weighted,matrix,label_list):
 #print(mtx)
 #result=k_NN(3,mtx,csr_matrix([5.0,8.0]).getrow(0),False,label_list)
 #print(result)
-k=input("Input the parameter k (an integer): ")
+#input parameter k which range from 1 to 10
+k=input("Input the parameter k (an integer from 1 to 10): ")
+while k.isdigit()==False or isinstance(int(k),int)==False or int(k)>10 or int(k)<1:
+    k=input("Error k, Input k (an integer from 1 to 10) again: ")
 weighted=input("Input True(weighted) or False(unweighted): ")
+while not (weighted=="False" or weighted=="True"):
+    weighted=input("Error input, Input agian [True(weighted) or False(unweighted)]: ")
+
+#calculate accuracy
 accuracy=ten_cross_validation(int(k),weighted,mtx,label_list)
 print("accuracy: %-10.4f%%"%(accuracy*100))
