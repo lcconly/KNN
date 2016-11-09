@@ -14,11 +14,12 @@ import time
 import copy
 from scipy.sparse import csr_matrix,vstack
 from scipy.io.mmio import mminfo,mmread,mmwrite
+from progressbar import Bar,Percentage,ETA,ProgressBar
 
 MAX_NUM=99999#define max num for divied by zero
 #####get upper path of the code
 __location__=os.path.realpath(os.path.join(os.getcwd(),os.path.dirname(__file__)))
-
+os.system("clear")
 #Input matrix filename using Regular Expressions to match
 mtx_file_name=input("Input the file of matrix as *.mtx: ")
 pattern=re.compile(r'.*\.mtx')
@@ -126,6 +127,10 @@ def k_NN(k,matrix,arr,weighted,label_list):
 
 #ten cross validation to calculate the accuracy
 def ten_cross_validation(k,weighted,matrix,label_list):
+    widgets = ["Progressing:",' <<<', Bar(), '>>> ',Percentage(),' ', ETA()]
+    pbar = ProgressBar(widgets=widgets, maxval=matrix.shape[0])
+    # maybe do something
+    pbar.start()
     sum_accuracy=0
     each_fold_num=int(matrix.shape[0]/10)
     #generate a random list
@@ -163,20 +168,26 @@ def ten_cross_validation(k,weighted,matrix,label_list):
         for j in range(i*each_fold_num,end_point):
             if label_list[random_total[j]]==k_NN(k,temp_matrix,matrix.getrow(random_total[j]),weighted,new_label_list):
                 count_accuracy=count_accuracy+1
-            print("j: %d  count_accuracy: %d   each fold num: %d"%(j,count_accuracy,each_fold_num))
+            pbar.update(j)
+        #print("accuracy of fold number %d : %-10.4f%%\n"%(i,100*count_accuracy/(end_point-i*each_fold_num)))
         sum_accuracy=sum_accuracy+count_accuracy/(end_point-i*each_fold_num)
+    pbar.finish()
     return sum_accuracy/10
 #print(mtx)
 #result=k_NN(3,mtx,csr_matrix([5.0,8.0]).getrow(0),False,label_list)
 #print(result)
-#input parameter k which range from 1 to 10
-k=input("Input the parameter k (an integer from 1 to 10): ")
-while k.isdigit()==False or isinstance(int(k),int)==False or int(k)>10 or int(k)<1:
-    k=input("Error k, Input k (an integer from 1 to 10) again: ")
-weighted=input("Input True(weighted) or False(unweighted): ")
-while not (weighted=="False" or weighted=="True"):
-    weighted=input("Error input, Input agian [True(weighted) or False(unweighted)]: ")
+is_continue="y"
+while is_continue=="y":
+    #input parameter k which range from 1 to 10
+    k=input("Input the parameter k (an integer from 1 to 10): ")
+    while k.isdigit()==False or isinstance(int(k),int)==False or int(k)>10 or int(k)<1:
+        k=input("Error k, Input k (an integer from 1 to 10) again: ")
+    weighted=input("Input True(weighted) or False(unweighted): ")
+    while not (weighted=="False" or weighted=="True"):
+        weighted=input("Error input, Input agian [True(weighted) or False(unweighted)]: ")
 
-#calculate accuracy
-accuracy=ten_cross_validation(int(k),weighted,mtx,label_list)
-print("accuracy: %-10.4f%%"%(accuracy*100))
+    #calculate accuracy
+    accuracy=ten_cross_validation(int(k),weighted,mtx,label_list)
+    print("accuracy: %-10.4f%%"%(accuracy*100))
+    is_continue=input("\n\n\nContinue to input another K or change parameter weighted ?"+ 
+            "\n(Input 'y' to continue or anything else to exit): ")
