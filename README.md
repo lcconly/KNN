@@ -1,6 +1,9 @@
 Assignment for Advanced machine learning: implement a k_NN
+
 Running Environment: Ubuntu 14.04
+
 Library needed: numpy, scipy(see http://www.scipy.org/install.html to know how to install)
+
 open source libary: progressbar(see https://github.com/niltonvolpato/python-progressbar)
 
 
