@@ -77,11 +77,8 @@ def euclidean_distance(array1, array2):
 #if weighted is True, the result is weighted KNN. Otherwise, it will be wigheted KNN
 def k_NN(k,matrix,arr,weighted,label_list):
     distance_dict={}
-#    time1=time.time()
     for i in range(matrix.shape[0]):
-#        distance_dict.setdefault(i,euclidean_distance(matrix.getrow(i).todense(),array.todense()))
         distance_dict.setdefault(i,euclidean_distance(matrix.getrow(i),arr))
-#    print("time: %f\n"%(time.time()-time1))
     #reserverse sorted the distance dictionary
     sorted_dict= sorted(distance_dict.items(), key=lambda d:d[1], reverse = False)
     count=0
@@ -155,12 +152,6 @@ def ten_cross_validation(k,weighted,matrix,label_list):
         for j in range(matrix.shape[0]):
             if j not in random_list:
                 temp_matrix=vstack([temp_matrix,matrix.getrow(j)])
-#        for j in range(i*each_fold_num,end_point):
-#            temp_matrix=csr_matrix()
-#            for m in temp_matrix[random_total[j]].nonzero()[1]:
-#                print(m)
-#                numpy.delete(temp_matrix,[random_total[j],m],None) 
-#        mmwrite("temp.mtx",temp_matrix)
 
         #define as csr_matrix to reduce time and space cost
         temp_matrix=csr_matrix(temp_matrix)
@@ -173,10 +164,12 @@ def ten_cross_validation(k,weighted,matrix,label_list):
         sum_accuracy=sum_accuracy+count_accuracy/(end_point-i*each_fold_num)
     pbar.finish()
     return sum_accuracy/10
-#print(mtx)
-#result=k_NN(3,mtx,csr_matrix([5.0,8.0]).getrow(0),False,label_list)
-#print(result)
-is_continue="y"
+f=open("result.txt",'w')
+for k in range (1,11):
+    print("k=%d weighted=%s : %-10.4f%%"%(k,"True",100*(ten_cross_validation(k,True,mtx,label_list))),file=f)
+    print("k=%d weighted=%s : %-10.4f%%"%(k,"False",100*(ten_cross_validation(k,False,mtx,label_list))),file=f)
+f.close()
+'''is_continue="y"
 while is_continue=="y":
     #input parameter k which range from 1 to 10
     k=input("Input the parameter k (an integer from 1 to 10): ")
@@ -189,5 +182,6 @@ while is_continue=="y":
     #calculate accuracy
     accuracy=ten_cross_validation(int(k),weighted,mtx,label_list)
     print("accuracy: %-10.4f%%"%(accuracy*100))
-    is_continue=input("\n\n\nContinue to input another K or change parameter weighted ?"+ 
+    is_continue=input("\n\nContinue to input another K or change parameter weighted ?"+ 
             "\n(Input 'y' to continue or anything else to exit): ")
+'''
