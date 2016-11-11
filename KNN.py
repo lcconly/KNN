@@ -99,7 +99,6 @@ def k_NN(k,matrix,arr,weighted,label_list):
                 count_dict[label_list[item[0]]]=1
             else:
                 count_dict[label_list[item[0]]]=count_dict[label_list[item[0]]]+1
-        print(count_dict)
         #sort the result to get the result
         sorted_count_dict= sorted(count_dict.items(), key=lambda d:d[1], reverse = True)
         result_label=sorted_count_dict[0][0]
@@ -120,7 +119,6 @@ def k_NN(k,matrix,arr,weighted,label_list):
                 else:
                     weight_count_dict[label_list[item[0]]]=weight_count_dict[label_list[item[0]]]+MAX_NUM
         #sort the result and get highest weighted one
-A
         sorted_weighted_count_dict= sorted(weight_count_dict.items(), key=lambda d:d[1], reverse = True)
         result_label=sorted_weighted_count_dict[0][0]
     return result_label
@@ -163,7 +161,7 @@ def ten_cross_validation(k,weighted,matrix,label_list):
             if label_list[random_total[j]]==k_NN(k,temp_matrix,matrix.getrow(random_total[j]),weighted,new_label_list):
                 count_accuracy=count_accuracy+1
             pbar.update(j)
-        print("accuracy of fold number %d : %-10.4f%%\n"%(i,100*count_accuracy/(end_point-i*each_fold_num)))
+        #print("accuracy of fold number %d : %-10.4f%%\n"%(i,100*count_accuracy/(end_point-i*each_fold_num)))
         sum_accuracy=sum_accuracy+count_accuracy/(end_point-i*each_fold_num)
     pbar.finish()
     return sum_accuracy/10
