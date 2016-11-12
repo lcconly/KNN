@@ -7,7 +7,27 @@ Library needed: numpy, scipy(see http://www.scipy.org/install.html to know how t
 open source libary: progressbar(see https://github.com/niltonvolpato/python-progressbar)
 
 
+
+File declaration：
+
+/progressbar: open source to show progress and rest time
+
+a.labels: labels of simple data
+
+a.mtx: matrix of simple data
+
+b.labels: labels of complex data
+
+b.mtx: matrix of complex data
+
+result.txt: accuracy of different parameter for data b
+
+KNN.py: code for knn
+
+
+
 running method:
+(NB: put matrix file and label file in the same location with the code)
 
 /***input to run the code***/
 $ python KNN.py
