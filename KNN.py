@@ -16,7 +16,7 @@ from scipy.sparse import csr_matrix,vstack
 from scipy.io.mmio import mminfo,mmread,mmwrite
 from progressbar import Bar,Percentage,ETA,ProgressBar
 
-MAX_NUM=99999#define max num for divied by zero
+MAX_NUM=999999#define max num for divied by zero
 #####get upper path of the code
 __location__=os.path.realpath(os.path.join(os.getcwd(),os.path.dirname(__file__)))
 os.system("clear")
@@ -69,13 +69,13 @@ def euclidean_distance(array1, array2):
 #        if i not in col_arr1[1]:
 #            sum=sum+array2[0,i]*array2[0,i]
 #    return math.sqrt(sum)
-    return numpy.sqrt(numpy.sum(numpy.square(array1.todense()-array2.todense())))
+    return 1.0/(1.0+numpy.sqrt(numpy.sum(numpy.square(array1.todense()-array2.todense()))))
 
 #define similarity
 def cosine_similarity(array1,array2):
     in1=numpy.mat(array1.todense())
     in2=numpy.mat(array2.todense())
-    return float(in1 * in2.T )/(numpy.linalg.norm(in1)*numpy.linalg.norm(in2))
+    return 0.5+0.5*float(in1 * in2.T )/(numpy.linalg.norm(in1)*numpy.linalg.norm(in2))
             
 
 
@@ -135,7 +135,11 @@ def k_NN(k,matrix,arr,weighted,label_list,parameter):
                 else:
                     weight_count_dict[label_list[item[0]]]=weight_count_dict[label_list[item[0]]]+MAX_NUM
         #sort the result and get highest weighted one
-        sorted_weighted_count_dict= sorted(weight_count_dict.items(), key=lambda d:d[1], reverse = True)
+        if parameter is 1:
+            sorted_weighted_count_dict= sorted(weight_count_dict.items(), key=lambda d:d[1], reverse = True)
+        if parameter is 2:
+            sorted_weighted_count_dict= sorted(weight_count_dict.items(), key=lambda d:d[1], reverse = False)
+
         result_label=sorted_weighted_count_dict[0][0]
     return result_label
 
@@ -199,15 +203,16 @@ print(k_NN(3,temp_matrix,mtx.getrow(4),False,label_list,1))
 '''
 
 #all parameter
-f=open("result_sim.txt",'w')
+
+'''f=open("result_sim.txt",'w')
 for k in range (1,11):
     print("k=%d weighted=%s : %-10.4f%%"%(k,"True",100*(ten_cross_validation(k,True,mtx,label_list,2))),file=f)
     print("k=%d weighted=%s : %-10.4f%%"%(k,"False",100*(ten_cross_validation(k,False,mtx,label_list,2))),file=f)
 f.close()
-
+'''
 
 #UI
-'''is_continue="y"
+is_continue="y"
 while is_continue=="y":
     #input parameter k which range from 1 to 10
     k=input("Input the parameter k (an integer from 1 to 10): ")
@@ -216,10 +221,14 @@ while is_continue=="y":
     weighted=input("Input True(weighted) or False(unweighted): ")
     while not (weighted=="False" or weighted=="True"):
         weighted=input("Error input, Input agian [True(weighted) or False(unweighted)]: ")
+    #input parameter which represent euclidean_distance or cosine_similarity
+    parameter=input("Input the parameter to determine similarity\n(1 as euclidean_distance and 2 as cosine_similarity): ")
+    while parameter.isdigit()==False or isinstance(int(parameter),int)==False or int(parameter)>2 or int(parameter)<1:
+        parameter=input("Error parameter, Input parameter (1 or 2) again: ")
 
     #calculate accuracy
-    accuracy=ten_cross_validation(int(k),weighted,mtx,label_list,2)
+    accuracy=ten_cross_validation(int(k),weighted,mtx,label_list,parameter)
     print("accuracy: %-10.4f%%"%(accuracy*100))
     is_continue=input("\n\nContinue to input another K or change parameter weighted ?"+ 
             "\n(Input 'y' to continue or anything else to exit): ")
-'''
+
