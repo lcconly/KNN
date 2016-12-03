@@ -70,17 +70,33 @@ def euclidean_distance(array1, array2):
 #            sum=sum+array2[0,i]*array2[0,i]
 #    return math.sqrt(sum)
     return numpy.sqrt(numpy.sum(numpy.square(array1.todense()-array2.todense())))
+
+#define similarity
+def cosine_similarity(array1,array2):
+    in1=numpy.mat(array1.todense())
+    in2=numpy.mat(array2.todense())
+    return float(in1 * in2.T )/(numpy.linalg.norm(in1)*numpy.linalg.norm(in2))
             
 
-#define function to get k nearest ones, it returns the assigned label
+
 #k is the k nearest neighbours, matrix is training matrix, arry is un-labeled array
 #if weighted is True, the result is weighted KNN. Otherwise, it will be wigheted KNN
-def k_NN(k,matrix,arr,weighted,label_list):
+#parameter to determine euclidean_distance or cosine_similarity
+def k_NN(k,matrix,arr,weighted,label_list,parameter):
     distance_dict={}
     for i in range(matrix.shape[0]):
-        distance_dict.setdefault(i,euclidean_distance(matrix.getrow(i),arr))
+        ########distance as euclidean_distance
+        if parameter is 1:
+            distance_dict.setdefault(i,euclidean_distance(matrix.getrow(i),arr))
+        ########distance as cosine_similarity 
+        if parameter is 2:
+            distance_dict.setdefault(i,cosine_similarity(matrix.getrow(i),arr))
+    sorted_dict={}
     #reserverse sorted the distance dictionary
-    sorted_dict= sorted(distance_dict.items(), key=lambda d:d[1], reverse = False)
+    if parameter is 1:
+        sorted_dict= sorted(distance_dict.items(), key=lambda d:d[1], reverse = False)
+    if parameter is 2:
+        sorted_dict= sorted(distance_dict.items(), key=lambda d:d[1], reverse = True) 
     count=0
     result_dict={}
     for item in sorted_dict[:]:
@@ -124,7 +140,7 @@ def k_NN(k,matrix,arr,weighted,label_list):
     return result_label
 
 #ten cross validation to calculate the accuracy
-def ten_cross_validation(k,weighted,matrix,label_list):
+def ten_cross_validation(k,weighted,matrix,label_list,parameter):
     widgets = ["Progressing:",' <<<', Bar(), '>>> ',Percentage(),' ', ETA()]
     pbar = ProgressBar(widgets=widgets, maxval=matrix.shape[0])
     # maybe do something
@@ -152,31 +168,46 @@ def ten_cross_validation(k,weighted,matrix,label_list):
         #using the rest data form as a matrix and set as training data
         for j in range(matrix.shape[0]):
             if j not in random_list:
-                temp_matrix=vstack([temp_matrix,matrix.getrow(j)])
+                if temp_matrix is None:
+                    temp_matrix=matrix.getrow(j)
+                else:
+                    temp_matrix=vstack([temp_matrix,matrix.getrow(j)])
 
         #define as csr_matrix to reduce time and space cost
         temp_matrix=csr_matrix(temp_matrix)
         #calculate accuracy
         for j in range(i*each_fold_num,end_point):
-            if label_list[random_total[j]]==k_NN(k,temp_matrix,matrix.getrow(random_total[j]),weighted,new_label_list):
+            if label_list[random_total[j]]==k_NN(k,temp_matrix,matrix.getrow(random_total[j]),weighted,new_label_list,parameter):
                 count_accuracy=count_accuracy+1
             pbar.update(j)
         #print("accuracy of fold number %d : %-10.4f%%\n"%(i,100*count_accuracy/(end_point-i*each_fold_num)))
         sum_accuracy=sum_accuracy+count_accuracy/(end_point-i*each_fold_num)
     pbar.finish()
     return sum_accuracy/10
-'''temp_matrix=None
+
+#single test
+'''
+temp_matrix=None
 for j in range(mtx.shape[0]):
     if not j==4:
-        temp_matrix=vstack([temp_matrix,mtx.getrow(j)])
+        if temp_matrix is None:
+            temp_matrix=mtx.getrow(j)
+        else:
+            temp_matrix=vstack([temp_matrix,mtx.getrow(j)])
 del(label_list[4])
-print(k_NN(3,temp_matrix,mtx.getrow(4),False,label_list))'''
-'''f=open("result_1.txt",'w')
+print(k_NN(3,temp_matrix,mtx.getrow(4),False,label_list,1))
+'''
+
+#all parameter
+f=open("result_sim.txt",'w')
 for k in range (1,11):
-    print("k=%d weighted=%s : %-10.4f%%"%(k,"True",100*(ten_cross_validation(k,True,mtx,label_list))),file=f)
-    print("k=%d weighted=%s : %-10.4f%%"%(k,"False",100*(ten_cross_validation(k,False,mtx,label_list))),file=f)
-f.close()'''
-is_continue="y"
+    print("k=%d weighted=%s : %-10.4f%%"%(k,"True",100*(ten_cross_validation(k,True,mtx,label_list,2))),file=f)
+    print("k=%d weighted=%s : %-10.4f%%"%(k,"False",100*(ten_cross_validation(k,False,mtx,label_list,2))),file=f)
+f.close()
+
+
+#UI
+'''is_continue="y"
 while is_continue=="y":
     #input parameter k which range from 1 to 10
     k=input("Input the parameter k (an integer from 1 to 10): ")
@@ -187,7 +218,8 @@ while is_continue=="y":
         weighted=input("Error input, Input agian [True(weighted) or False(unweighted)]: ")
 
     #calculate accuracy
-    accuracy=ten_cross_validation(int(k),weighted,mtx,label_list)
+    accuracy=ten_cross_validation(int(k),weighted,mtx,label_list,2)
     print("accuracy: %-10.4f%%"%(accuracy*100))
     is_continue=input("\n\nContinue to input another K or change parameter weighted ?"+ 
             "\n(Input 'y' to continue or anything else to exit): ")
+'''
