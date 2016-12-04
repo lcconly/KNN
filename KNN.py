@@ -187,12 +187,15 @@ def ten_cross_validation(k,weighted,matrix,label_list,parameter):
 
 def k_NN_cosine(k,unlabel_tag,random_list,weighted,label_list,dot_matrix):
     cosine_distance={}
+    #calculate cosine similarity
     for i in range(dot_matrix.shape[0]):
         if i not in random_list:
             cosine_distance.setdefault(i,dot_matrix[unlabel_tag,i]/(math.sqrt(dot_matrix[i,i])*math.sqrt(dot_matrix[unlabel_tag,unlabel_tag])))
+    #sort cosine similarity
     sorted_dict= sorted(cosine_distance.items(), key=lambda d:d[1], reverse = True) 
     count=0
     result_dict={}
+    #get top k element
     for item in sorted_dict[:]:
         if count<k:
             result_dict.setdefault(item[0],item[1])
@@ -200,7 +203,9 @@ def k_NN_cosine(k,unlabel_tag,random_list,weighted,label_list,dot_matrix):
             break
         count=count+1
     if weighted=="False":
+        #unweighted knn
         count_dict={}
+        #count
         for item in result_dict.items():
             if label_list[item[0]] not in count_dict.keys():
                 count_dict[label_list[item[0]]]=1
