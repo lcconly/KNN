@@ -83,15 +83,12 @@ def cosine_similarity(array1,array2):
 #k is the k nearest neighbours, matrix is training matrix, arry is un-labeled array
 #if weighted is True, the result is weighted KNN. Otherwise, it will be wigheted KNN
 #parameter to determine euclidean_distance or cosine_similarity
-def k_NN(k,matrix,arr,weighted,label_list,parameter):
+def k_NN(k,matrix,arr,weighted,label_list):
     distance_dict={}
     for i in range(matrix.shape[0]):
         ########distance as euclidean_distance
-        if parameter == 1:
-            distance_dict.setdefault(i,euclidean_distance(matrix.getrow(i),arr))
-        ########distance as cosine_similarity 
-        if parameter == 2:
-            distance_dict.setdefault(i,cosine_similarity(matrix.getrow(i),arr))
+        distance_dict.setdefault(i,euclidean_distance(matrix.getrow(i),arr))
+        #distance_dict.setdefault(i,cosine_similarity(matrix.getrow(i),arr))
     #reserverse sorted the distance dictionary  decreasing sort
     sorted_dict= sorted(distance_dict.items(), key=lambda d:d[1], reverse = True) 
     count=0
@@ -141,6 +138,9 @@ def ten_cross_validation(k,weighted,matrix,label_list,parameter):
     #generate a random list
     random_total=[n for n in range(matrix.shape[0])]
     random.shuffle(random_total)
+    dot_matrix=None
+    if parameter==2:
+        dot_matrix=matrix.dot(matrix.T)
     #divie the test as ten folds
     for i in range(10):
         count_accuracy=0
@@ -149,32 +149,79 @@ def ten_cross_validation(k,weighted,matrix,label_list,parameter):
             end_point=matrix.shape[0]
         #get selected data as un-labeled array
         random_list=[]
-        new_label_list=copy.copy(label_list)
         for j in range(i*each_fold_num,end_point):
             random_list.append(random_total[j])
-        random_list.sort(reverse=True)
-        for j in random_list:
-            del(new_label_list[j])
-        temp_matrix=None
-        #using the rest data form as a matrix and set as training data
-        for j in range(matrix.shape[0]):
-            if j not in random_list:
-                if temp_matrix is None:
-                    temp_matrix=matrix.getrow(j)
-                else:
-                    temp_matrix=vstack([temp_matrix,matrix.getrow(j)])
-        #define as csr_matrix to reduce time and space cost
-        temp_matrix=csr_matrix(temp_matrix)
-        #calculate accuracy
-        for j in range(i*each_fold_num,end_point):
-            if label_list[random_total[j]]==k_NN(k,temp_matrix,matrix.getrow(random_total[j]),weighted,new_label_list,parameter):
-                count_accuracy=count_accuracy+1
-            pbar.update(j)
-        #print("accuracy of fold number %d : %-10.4f%%\n"%(i,100*count_accuracy/(end_point-i*each_fold_num)))
-        sum_accuracy=sum_accuracy+count_accuracy/(end_point-i*each_fold_num)
+        if parameter==1:
+            #label_list for euclidean_distance
+            new_label_list=copy.copy(label_list)
+            random_list.sort(reverse=True)
+            for j in random_list:
+                del(new_label_list[j])
+
+
+            temp_matrix=None
+            #using the rest data form as a matrix and set as training data
+            for j in range(matrix.shape[0]):
+                if j not in random_list:
+                    if temp_matrix is None:
+                        temp_matrix=matrix.getrow(j)
+                    else:
+                        temp_matrix=vstack([temp_matrix,matrix.getrow(j)])
+            #define as csr_matrix to reduce time and space cost
+            temp_matrix=csr_matrix(temp_matrix)
+            #calculate accuracy
+            for j in range(i*each_fold_num,end_point):
+                if label_list[random_total[j]]==k_NN(k,temp_matrix,matrix.getrow(random_total[j]),weighted,new_label_list):
+                    count_accuracy=count_accuracy+1
+                pbar.update(j)
+            #print("accuracy of fold number %d : %-10.4f%%\n"%(i,100*count_accuracy/(end_point-i*each_fold_num)))
+            sum_accuracy=sum_accuracy+count_accuracy/(end_point-i*each_fold_num)
+        elif parameter==2:
+            for j in range(i*each_fold_num,end_point):
+                if label_list[random_total[j]]==k_NN_cosine(k,random_total[j],random_list,weighted,label_list,dot_matrix):
+                    count_accuracy=count_accuracy+1
+                pbar.update(j)
+            sum_accuracy=sum_accuracy+count_accuracy/(end_point-i*each_fold_num)
     pbar.finish()
     return sum_accuracy/10
 
+def k_NN_cosine(k,unlabel_tag,random_list,weighted,label_list,dot_matrix):
+    cosine_distance={}
+    for i in range(dot_matrix.shape[0]):
+        if i not in random_list:
+            cosine_distance.setdefault(i,dot_matrix[unlabel_tag,i]/(math.sqrt(dot_matrix[i,i])*math.sqrt(dot_matrix[unlabel_tag,unlabel_tag])))
+    sorted_dict= sorted(cosine_distance.items(), key=lambda d:d[1], reverse = True) 
+    count=0
+    result_dict={}
+    for item in sorted_dict[:]:
+        if count<k:
+            result_dict.setdefault(item[0],item[1])
+        else:
+            break
+        count=count+1
+    if weighted=="False":
+        count_dict={}
+        for item in result_dict.items():
+            if label_list[item[0]] not in count_dict.keys():
+                count_dict[label_list[item[0]]]=1
+            else:
+                count_dict[label_list[item[0]]]=count_dict[label_list[item[0]]]+1
+        sorted_count_dict= sorted(count_dict.items(), key=lambda d:d[1], reverse = True)
+        result_label=sorted_count_dict[0][0]
+    elif weighted=="True":
+        #weighted KNN
+        weight_count_dict={}
+        for item in result_dict.items():
+            #calculate weighted and merge differnet item
+            if label_list[item[0]] not in weight_count_dict.keys():
+                #there are some cases that two arrays are the same.
+                weight_count_dict[label_list[item[0]]]=item[1]
+            else: 
+                weight_count_dict[label_list[item[0]]]=weight_count_dict[label_list[item[0]]]+item[1]
+        #sort the result and get highest weighted one: decreasing sort
+        sorted_weighted_count_dict= sorted(weight_count_dict.items(), key=lambda d:d[1], reverse = True)
+        result_label=sorted_weighted_count_dict[0][0] 
+    return result_label
 #single test
 '''
 temp_matrix=None
@@ -196,8 +243,8 @@ if choice == "Yes":
 #all parameter
     f=open("result_all.txt",'w')
     for k in range (1,11):
-        print("k=%d weighted=%s method=euclidean distance : %-10.4f%%"%(k,"True",100*(ten_cross_validation(k,True,mtx,label_list,1))),file=f)
-        print("k=%d weighted=%s method=euclidean distance : %-10.4f%%"%(k,"False",100*(ten_cross_validation(k,False,mtx,label_list,1))),file=f)
+        #print("k=%d weighted=%s method=euclidean distance : %-10.4f%%"%(k,"True",100*(ten_cross_validation(k,True,mtx,label_list,1))),file=f)
+        #print("k=%d weighted=%s method=euclidean distance : %-10.4f%%"%(k,"False",100*(ten_cross_validation(k,False,mtx,label_list,1))),file=f)
         print("k=%d weighted=%s method=cosine similarity  : %-10.4f%%"%(k,"True",100*(ten_cross_validation(k,True,mtx,label_list,2))),file=f)
         print("k=%d weighted=%s method=cosine Similarity  : %-10.4f%%"%(k,"False",100*(ten_cross_validation(k,False,mtx,label_list,2))),file=f)
     f.close()
