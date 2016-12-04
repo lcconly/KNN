@@ -92,11 +92,8 @@ def k_NN(k,matrix,arr,weighted,label_list,parameter):
         if parameter is 2:
             distance_dict.setdefault(i,cosine_similarity(matrix.getrow(i),arr))
     sorted_dict={}
-    #reserverse sorted the distance dictionary
-    if parameter is 1:
-        sorted_dict= sorted(distance_dict.items(), key=lambda d:d[1], reverse = False)
-    if parameter is 2:
-        sorted_dict= sorted(distance_dict.items(), key=lambda d:d[1], reverse = True) 
+    #reserverse sorted the distance dictionary  decreasing sort
+    sorted_dict= sorted(distance_dict.items(), key=lambda d:d[1], reverse = True) 
     count=0
     result_dict={}
     for item in sorted_dict[:]:
@@ -125,20 +122,11 @@ def k_NN(k,matrix,arr,weighted,label_list,parameter):
             #calculate weighted and merge differnet item
             if label_list[item[0]] not in weight_count_dict.keys():
                 #there are some cases that two arrays are the same.
-                if not item[1]==0:
-                    weight_count_dict[label_list[item[0]]]=1/item[1]
-                else:
-                    weight_count_dict[label_list[item[0]]] =MAX_NUM
+                weight_count_dict[label_list[item[0]]]=item[1]
             else: 
-                if not item[1]==0:
-                    weight_count_dict[label_list[item[0]]]=weight_count_dict[label_list[item[0]]]+1/item[1]
-                else:
-                    weight_count_dict[label_list[item[0]]]=weight_count_dict[label_list[item[0]]]+MAX_NUM
-        #sort the result and get highest weighted one
-        if parameter is 1:
-            sorted_weighted_count_dict= sorted(weight_count_dict.items(), key=lambda d:d[1], reverse = True)
-        if parameter is 2:
-            sorted_weighted_count_dict= sorted(weight_count_dict.items(), key=lambda d:d[1], reverse = False)
+                weight_count_dict[label_list[item[0]]]=weight_count_dict[label_list[item[0]]]+item[1]
+        #sort the result and get highest weighted one: decreasing sort
+        sorted_weighted_count_dict= sorted(weight_count_dict.items(), key=lambda d:d[1], reverse = True)
 
         result_label=sorted_weighted_count_dict[0][0]
     return result_label
@@ -202,33 +190,40 @@ del(label_list[4])
 print(k_NN(3,temp_matrix,mtx.getrow(4),False,label_list,1))
 '''
 
+choice=input("Input \"Yes\" to get all accuracy of different parametr k and weighted."+
+    "\n  \"No\" to input parameter by user: ")
+while not (choice=="Yes" or choice=="No"):
+    weighted=input("Error input, Input agian [Yes(Automatic calculation) or No(user input)]: ")
+if choice == "Yes":
 #all parameter
+    f=open("result_all.txt",'w')
+    for k in range (1,11):
+        print("k=%d weighted=%s method=euclidean distance : %-10.4f%%"%(k,"True",100*(ten_cross_validation(k,True,mtx,label_list,1))),file=f)
+        print("k=%d weighted=%s method=euclidean distance : %-10.4f%%"%(k,"False",100*(ten_cross_validation(k,False,mtx,label_list,1))),file=f)
+        print("k=%d weighted=%s method=cosine similarity  : %-10.4f%%"%(k,"True",100*(ten_cross_validation(k,True,mtx,label_list,2))),file=f)
+        print("k=%d weighted=%s method=cosine Similarity  : %-10.4f%%"%(k,"False",100*(ten_cross_validation(k,False,mtx,label_list,2))),file=f)
+    f.close()
+    os.system("gedit result_all.txt")
+    
 
-'''f=open("result_sim.txt",'w')
-for k in range (1,11):
-    print("k=%d weighted=%s : %-10.4f%%"%(k,"True",100*(ten_cross_validation(k,True,mtx,label_list,2))),file=f)
-    print("k=%d weighted=%s : %-10.4f%%"%(k,"False",100*(ten_cross_validation(k,False,mtx,label_list,2))),file=f)
-f.close()
-'''
-
+elif choice == "No":
 #UI
-is_continue="y"
-while is_continue=="y":
-    #input parameter k which range from 1 to 10
-    k=input("Input the parameter k (an integer from 1 to 10): ")
-    while k.isdigit()==False or isinstance(int(k),int)==False or int(k)>10 or int(k)<1:
-        k=input("Error k, Input k (an integer from 1 to 10) again: ")
-    weighted=input("Input True(weighted) or False(unweighted): ")
-    while not (weighted=="False" or weighted=="True"):
-        weighted=input("Error input, Input agian [True(weighted) or False(unweighted)]: ")
-    #input parameter which represent euclidean_distance or cosine_similarity
-    parameter=input("Input the parameter to determine similarity\n(1 as euclidean_distance and 2 as cosine_similarity): ")
-    while parameter.isdigit()==False or isinstance(int(parameter),int)==False or int(parameter)>2 or int(parameter)<1:
-        parameter=input("Error parameter, Input parameter (1 or 2) again: ")
+    is_continue="y"
+    while is_continue=="y":
+        #input parameter k which range from 1 to 10
+        k=input("Input the parameter k (an integer from 1 to 10): ")
+        while k.isdigit()==False or isinstance(int(k),int)==False or int(k)>10 or int(k)<1:
+            k=input("Error k, Input k (an integer from 1 to 10) again: ")
+        weighted=input("Input True(weighted) or False(unweighted): ")
+        while not (weighted=="False" or weighted=="True"):
+            weighted=input("Error input, Input agian [True(weighted) or False(unweighted)]: ")
+        #input parameter which represent euclidean_distance or cosine_similarity
+        parameter=input("Input the parameter to determine similarity\n(1 as euclidean_distance and 2 as cosine_similarity): ")
+        while parameter.isdigit()==False or isinstance(int(parameter),int)==False or int(parameter)>2 or int(parameter)<1:
+            parameter=input("Error parameter, Input parameter (1 or 2) again: ")
 
-    #calculate accuracy
-    accuracy=ten_cross_validation(int(k),weighted,mtx,label_list,parameter)
-    print("accuracy: %-10.4f%%"%(accuracy*100))
-    is_continue=input("\n\nContinue to input another K or change parameter weighted ?"+ 
+        #calculate accuracy
+        accuracy=ten_cross_validation(int(k),weighted,mtx,label_list,parameter)
+        print("accuracy: %-10.4f%%"%(accuracy*100))
+        is_continue=input("\n\nContinue to input another K or change parameter weighted ?"+ 
             "\n(Input 'y' to continue or anything else to exit): ")
-
