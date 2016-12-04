@@ -22,7 +22,7 @@ b.labels: labels of complex data
 
 b.mtx: matrix of complex data
 
-result.txt: accuracy of different parameter for data b
+result_all.txt: accuracy of different parameter for data b
 
 KNN.py: code for knn
 

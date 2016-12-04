@@ -40,6 +40,10 @@ Input the file of matrix as *.mtx:
 /***notices to input the file of assigned labels end with .labels(example in b.labels)***/
 Input the file of label as *.labels:
 
+/***notices to choose Automatic calculation or manually input***/
+Input "Yes" to get all accuracy of different parametr k and weighted.
+  "No" to input parameter by user: Yes
+
 /***notices to input parameter k (integer) range from 1 to 10 ***/
 Input the parameter k (an integer from 1 to 10):
 
