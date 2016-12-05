@@ -187,6 +187,7 @@ def ten_cross_validation(k,weighted,matrix,label_list,parameter):
 
 def k_NN_cosine(k,unlabel_tag,random_list,weighted,label_list,dot_matrix):
     cosine_distance={}
+    result_label=None
     #calculate cosine similarity
     for i in range(dot_matrix.shape[0]):
         if i not in random_list:
