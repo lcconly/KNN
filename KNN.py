@@ -190,7 +190,7 @@ def k_NN_cosine(k,unlabel_tag,random_list,weighted,label_list,dot_matrix):
     #calculate cosine similarity
     for i in range(dot_matrix.shape[0]):
         if i not in random_list:
-            cosine_distance.setdefault(i,dot_matrix[unlabel_tag,i]/(math.sqrt(dot_matrix[i,i])*math.sqrt(dot_matrix[unlabel_tag,unlabel_tag])))
+            cosine_distance.setdefault(i,0.5+0.5*(dot_matrix[unlabel_tag,i]/(math.sqrt(dot_matrix[i,i])*math.sqrt(dot_matrix[unlabel_tag,unlabel_tag]))))
     #sort cosine similarity
     sorted_dict= sorted(cosine_distance.items(), key=lambda d:d[1], reverse = True) 
     count=0
@@ -213,7 +213,7 @@ def k_NN_cosine(k,unlabel_tag,random_list,weighted,label_list,dot_matrix):
                 count_dict[label_list[item[0]]]=count_dict[label_list[item[0]]]+1
         sorted_count_dict= sorted(count_dict.items(), key=lambda d:d[1], reverse = True)
         result_label=sorted_count_dict[0][0]
-    elif weighted=="True":
+    else:
         #weighted KNN
         weight_count_dict={}
         for item in result_dict.items():
@@ -248,8 +248,8 @@ if choice == "Yes":
 #all parameter
     f=open("result_all.txt",'w')
     for k in range (1,11):
-        #print("k=%d weighted=%s method=euclidean distance : %-10.4f%%"%(k,"True",100*(ten_cross_validation(k,True,mtx,label_list,1))),file=f)
-        #print("k=%d weighted=%s method=euclidean distance : %-10.4f%%"%(k,"False",100*(ten_cross_validation(k,False,mtx,label_list,1))),file=f)
+        print("k=%d weighted=%s method=euclidean distance : %-10.4f%%"%(k,"True",100*(ten_cross_validation(k,True,mtx,label_list,1))),file=f)
+        print("k=%d weighted=%s method=euclidean distance : %-10.4f%%"%(k,"False",100*(ten_cross_validation(k,False,mtx,label_list,1))),file=f)
         print("k=%d weighted=%s method=cosine similarity  : %-10.4f%%"%(k,"True",100*(ten_cross_validation(k,True,mtx,label_list,2))),file=f)
         print("k=%d weighted=%s method=cosine Similarity  : %-10.4f%%"%(k,"False",100*(ten_cross_validation(k,False,mtx,label_list,2))),file=f)
     f.close()
