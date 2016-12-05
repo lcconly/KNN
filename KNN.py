@@ -187,6 +187,7 @@ def ten_cross_validation(k,weighted,matrix,label_list,parameter):
 
 def k_NN_cosine(k,unlabel_tag,random_list,weighted,label_list,dot_matrix):
     cosine_distance={}
+    result_label=None
     #calculate cosine similarity
     for i in range(dot_matrix.shape[0]):
         if i not in random_list:
@@ -248,8 +249,8 @@ if choice == "Yes":
 #all parameter
     f=open("result_all.txt",'w')
     for k in range (1,11):
-        #print("k=%d weighted=%s method=euclidean distance : %-10.4f%%"%(k,"True",100*(ten_cross_validation(k,True,mtx,label_list,1))),file=f)
-        #print("k=%d weighted=%s method=euclidean distance : %-10.4f%%"%(k,"False",100*(ten_cross_validation(k,False,mtx,label_list,1))),file=f)
+        print("k=%d weighted=%s method=euclidean distance : %-10.4f%%"%(k,"True",100*(ten_cross_validation(k,True,mtx,label_list,1))),file=f)
+        print("k=%d weighted=%s method=euclidean distance : %-10.4f%%"%(k,"False",100*(ten_cross_validation(k,False,mtx,label_list,1))),file=f)
         print("k=%d weighted=%s method=cosine similarity  : %-10.4f%%"%(k,"True",100*(ten_cross_validation(k,True,mtx,label_list,2))),file=f)
         print("k=%d weighted=%s method=cosine Similarity  : %-10.4f%%"%(k,"False",100*(ten_cross_validation(k,False,mtx,label_list,2))),file=f)
     f.close()
